@@ -65,7 +65,7 @@ def draw_menu():
     _is_webcam = os.environ.get("GESTRA_WEBCAM") == "1"
     if _is_webcam:
         p1_line = small_font.render("Player 1: YOUR BODY (webcam)", True, (100, 255, 100))
-        p1_detail = small_font.render("Punch / Kick / Step Left-Right / Stand Still", True, (180, 180, 180))
+        p1_detail = small_font.render("Raise Arm = Punch / Lean = Move / Still = Block", True, (180, 180, 180))
     else:
         p1_line = small_font.render("Player 1: WASD + UIOJKL", True, (255, 255, 255))
         p1_detail = None
@@ -148,6 +148,17 @@ elif os.environ.get("GESTRA_WEBCAM") == "1":
     from motion.calibration import run_calibration
     print("Gestra: starting camera calibration...")
     run_calibration()
+
+    # Quick-record: let the user record ~30s of their own movements
+    from motion.quick_record import run_quick_record
+    new_data_dir = run_quick_record()
+    if new_data_dir:
+        from motion.quick_train import quick_train
+        print("Gestra: training on your data...")
+        quick_train(newest_dir=new_data_dir)
+    else:
+        print("Gestra: skipped quick recording")
+
     # Auto-detect: use personal model if it exists, otherwise fall back to rules
     _personal_model = os.path.join(_PROJECT_ROOT, "motion", "models", "action_personal.pt")
     if os.path.exists(_personal_model) and os.environ.get("GESTRA_RULES_ONLY") != "1":
