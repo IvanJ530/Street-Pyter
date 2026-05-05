@@ -144,13 +144,9 @@ class Character(pygame.sprite.Sprite):
         return controls
 
     def external_action_input(self, held=True):
-        # Pull the latest named action from the provider and convert it into
-        # the same nested-list shape that keyboard/controller input produces.
-        # Apply the same one-shot filter (held=False) as the other input paths
-        # so taps don't auto-repeat across frames.
         from motion.named_action import named_to_input
         name = self.action_provider()
-        inputs = named_to_input(name, flip=self.flip)
+        inputs = named_to_input(name, flip=False)
 
         if not held:
             if self.input_buffer[-1] == inputs:
@@ -195,6 +191,7 @@ class Character(pygame.sprite.Sprite):
             dx = -self.rect.left
         if self.rect.right + dx > SCREEN_WIDTH:
             dx = SCREEN_WIDTH - self.rect.right
+
         if self.rect.bottom + dy > FLOOR:
             self.rect.bottom = FLOOR
             self.vel_y = 0

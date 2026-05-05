@@ -11,6 +11,9 @@ from time import sleep
 import random
 import os
 import sys
+import time
+
+import numpy as np
 
 # Make the top-level project root (which holds the `motion/` package) importable
 # regardless of whether the game is launched from its own directory or the repo
@@ -154,8 +157,33 @@ elif os.environ.get("GESTRA_WEBCAM") == "1":
     new_data_dir = run_quick_record()
     if new_data_dir:
         from motion.quick_train import quick_train
+        import threading
         print("Gestra: training on your data...")
-        quick_train(newest_dir=new_data_dir)
+
+        train_done = threading.Event()
+        def _train():
+            quick_train(newest_dir=new_data_dir)
+            train_done.set()
+        threading.Thread(target=_train, daemon=True).start()
+
+        # Show training progress screen while model trains
+        import cv2
+        train_start = time.time()
+        while not train_done.is_set():
+            img = np.zeros((480, 640, 3), dtype=np.uint8)
+            elapsed = int(time.time() - train_start)
+            cv2.putText(img, "Training your model...", (120, 180),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 255), 2)
+            cv2.putText(img, f"Please wait (~20-40 seconds)", (130, 240),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (200, 200, 200), 1)
+            cv2.putText(img, f"Elapsed: {elapsed}s", (240, 300),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 1)
+            dots = "." * ((elapsed % 3) + 1)
+            cv2.putText(img, dots, (320, 350),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 2)
+            cv2.imshow("Gestra - Quick Record", img)
+            cv2.waitKey(100)
+        cv2.destroyAllWindows()
     else:
         print("Gestra: skipped quick recording")
 
